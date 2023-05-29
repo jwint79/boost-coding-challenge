@@ -1,0 +1,6 @@
+cache
+uploads
+
+node_modules
+.dockerignore
+.env*
