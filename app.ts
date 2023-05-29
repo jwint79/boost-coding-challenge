@@ -34,8 +34,8 @@ app.post('/upload', upload.array('images'), (req: Request, res: Response) => {
 
 app.get('/image/:imageId', async (req: Request, res: Response) => {
     const { imageId } = req.params;
-
-    const imagePath = path.join(__dirname, `uploads/${imageId}`);
+    const baseId = imageId.split('.')[0]
+    const imagePath = path.join(__dirname, `uploads/${baseId}`);
 
     let format;
 
@@ -46,40 +46,20 @@ app.get('/image/:imageId', async (req: Request, res: Response) => {
     }
 
     if(!fs.existsSync(imagePath)) {
-        res.status(400).send({ error: `Image with id ${imageId} does not exist.`})
+        res.status(400).send({ error: `Image with id ${baseId} does not exist.`})
     } else {
         if(!format) {
             res.sendFile(imagePath);
         } else {
             const imageBuf = await sharp(imagePath).toBuffer();
-            const convertedBuf = await sharp(imageBuf).toFormat(sharp.format[`${format}`]).toBuffer();
-            res.type(`image/${format}`)
-        }
-    }
-
-    if(!format) {
-        res.contentType('image/png').sendFile(imagePath);
-    } else {
-        try {
-            const image = await fsPromise.readFile()
-            if (format && fs.existsSync(cachePath)) {
-                const cachedImage = await fsPromise.readFile(cachePath);
-                res.type(`image/${format}`).send(cachedImage);
-            } else {
-                const imageBuf = await sharp(imagePath).toBuffer();
-    
-                if (format) {
-                    const convertedBuf = await sharp(imageBuf).toFormat(sharp.format[`${format}`]).toBuffer();
-                    await fsPromise.writeFile(cachePath, convertedBuf);
-                    res.type(`image/${format}`).send(convertedBuf);
-                } else {
-                    res.sendFile(imagePath)
-                }
+            try {
+                const convertedBuf = await sharp(imageBuf).toFormat(sharp.format[`${format}`]).toBuffer();
+                res.type(`image/${format}`).send(convertedBuf);
+            } catch(error) {
+                console.log(error);
+                res.status(500).send({ error: "Error processing image. Accepted conversion formats are: JPEG, PNG, WebP, GIF, AVIF and TIFF" })
             }
-        } catch (error) {
-            console.log(error);
-            res.status(500).send({ error: "Error processing image. Accepted conversion formats are: JPEG, PNG, WebP, GIF, AVIF and TIFF" })
-        }*/
+        }
     }
 })
 
