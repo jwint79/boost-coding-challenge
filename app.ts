@@ -54,6 +54,7 @@ app.get('/image/:imageId', async (req: Request, res: Response) => {
             const imageBuf = await sharp(imagePath).toBuffer();
             try {
                 const convertedBuf = await sharp(imageBuf).toFormat(sharp.format[`${format}`]).toBuffer();
+                await fsPromise.writeFile()
                 res.type(`image/${format}`).send(convertedBuf);
             } catch(error) {
                 console.log(error);
