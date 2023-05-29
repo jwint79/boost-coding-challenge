@@ -13,7 +13,7 @@ const storage = multer.diskStorage({
     filename: function(req, file, cb) {
         const ext = file.originalname.split('.').pop();
         const uuid = uuidv4();
-        cb(null, uuid + '.' + ext);
+        cb(null, uuid);
     }
 })
 
@@ -34,18 +34,34 @@ app.post('/upload', upload.array('images'), (req: Request, res: Response) => {
 
 app.get('/image/:imageId', async (req: Request, res: Response) => {
     const { imageId } = req.params;
-    const { format } = req.query;
 
     const imagePath = path.join(__dirname, `uploads/${imageId}`);
-    const cachePath = path.join(__dirname, `cache/${imageId.split('.')[0]}.${format}`)
 
-    const originalFormat = imageId.split('.')[1];
+    let format;
 
-    if(!format || format === originalFormat) {
-        res.sendFile(imagePath);
+    try {
+        format = imageId.split('.')[1];
+    } catch(error) {
+
+    }
+
+    if(!fs.existsSync(imagePath)) {
+        res.status(400).send({ error: `Image with id ${imageId} does not exist.`})
+    } else {
+        if(!format) {
+            res.sendFile(imagePath);
+        } else {
+            const imageBuf = await sharp(imagePath).toBuffer();
+            const convertedBuf = await sharp(imageBuf).toFormat(sharp.format[`${format}`]).toBuffer();
+            res.type(`image/${format}`)
+        }
+    }
+
+    if(!format) {
+        res.contentType('image/png').sendFile(imagePath);
     } else {
         try {
-
+            const image = await fsPromise.readFile()
             if (format && fs.existsSync(cachePath)) {
                 const cachedImage = await fsPromise.readFile(cachePath);
                 res.type(`image/${format}`).send(cachedImage);
@@ -63,7 +79,7 @@ app.get('/image/:imageId', async (req: Request, res: Response) => {
         } catch (error) {
             console.log(error);
             res.status(500).send({ error: "Error processing image. Accepted conversion formats are: JPEG, PNG, WebP, GIF, AVIF and TIFF" })
-        }
+        }*/
     }
 })
 
