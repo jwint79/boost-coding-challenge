@@ -50,11 +50,14 @@ app.get('/image/:imageId', async (req: Request, res: Response) => {
     } else {
         if(!format) {
             res.sendFile(imagePath);
+        } else if(fs.existsSync(imagePath + `.${format}`)) {
+            console.log('cached')
+            res.type(`image/${format}`).sendFile(imagePath + `.${format}`)
         } else {
             const imageBuf = await sharp(imagePath).toBuffer();
             try {
                 const convertedBuf = await sharp(imageBuf).toFormat(sharp.format[`${format}`]).toBuffer();
-                await fsPromise.writeFile()
+                await fsPromise.writeFile(imagePath + `.${format}`, convertedBuf);
                 res.type(`image/${format}`).send(convertedBuf);
             } catch(error) {
                 console.log(error);
