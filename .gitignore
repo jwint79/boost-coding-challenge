@@ -1,5 +1,5 @@
 uploads
-
+.DS_Store
 node_modules
 .dockerignore
 .env*
